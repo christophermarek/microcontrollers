@@ -3,4 +3,4 @@ build
 .cache
 .git
 managed_components
-main/Kconfig
+main/wb_config.h

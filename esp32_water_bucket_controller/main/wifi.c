@@ -1,10 +1,3 @@
-/*
- * wifi.c - WiFi station init for the water bucket controller.
- *
- * Connects to AP from CONFIG_WB_WIFI_SSID / CONFIG_WB_WIFI_PASSWORD.
- * Blocks until IP (IP_EVENT_STA_GOT_IP) or ~10 s timeout.
- */
-
 #include <string.h>
 #include "esp_event.h"
 #include "esp_log.h"
@@ -13,6 +6,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "priv.h"
+#include "wb_config.h"
 
 static const char *TAG = "wb";
 
@@ -39,7 +33,7 @@ static void ip_event(void *arg, esp_event_base_t base, int32_t id, void *data)  
 
 void wifi_init_blocking(void)
 {
-    ESP_LOGI(TAG, "wifi: init STA, SSID=%s", CONFIG_WB_WIFI_SSID);
+    ESP_LOGI(TAG, "wifi: init STA, SSID=%s", WB_WIFI_SSID);
     esp_netif_create_default_wifi_sta();
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
@@ -50,8 +44,8 @@ void wifi_init_blocking(void)
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
                                                         &ip_event, NULL, &instance_got_ip));
     wifi_config_t wcfg = {0};
-    strncpy((char *)wcfg.sta.ssid, CONFIG_WB_WIFI_SSID, sizeof(wcfg.sta.ssid) - 1);
-    strncpy((char *)wcfg.sta.password, CONFIG_WB_WIFI_PASSWORD, sizeof(wcfg.sta.password) - 1);
+    strncpy((char *)wcfg.sta.ssid, WB_WIFI_SSID, sizeof(wcfg.sta.ssid) - 1);
+    strncpy((char *)wcfg.sta.password, WB_WIFI_PASSWORD, sizeof(wcfg.sta.password) - 1);
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wcfg));
     ESP_ERROR_CHECK(esp_wifi_start());

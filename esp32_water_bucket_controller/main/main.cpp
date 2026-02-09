@@ -6,7 +6,7 @@
  *   2. Create pump/level mutex (protects shared state across timer and MQTT task).
  *   3. GPIO init (pump outputs LOW, level inputs; no pull on level pins).
  *   4. WiFi STA connect (block until IP or 10 s timeout).
- *   5. MQTT client init from CONFIG_WB_MQTT_*, register event handler, start client.
+ *   5. MQTT client init from wb_config.h, register event handler, start client.
  *   6. Create 200 ms periodic timer for level polling.
  *   7. Block forever; all work is done in timer callback and MQTT event handler.
  *
@@ -16,13 +16,16 @@
 
 #include <cstring>
 
+#include "esp_event.h"
 #include "esp_log.h"
+#include "esp_netif.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "mqtt_client.h"
 #include "nvs_flash.h"
 #include "priv.h"
+#include "wb_config.h"
 
 static const char *TAG = "wb";
 
@@ -39,15 +42,18 @@ extern "C" void app_main(void)
     }
     ESP_LOGI(TAG, "app_main: gpio_init");
     gpio_init();
+    ESP_LOGI(TAG, "app_main: netif and event loop");
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
     ESP_LOGI(TAG, "app_main: wifi_init_blocking");
     wifi_init_blocking();
-    ESP_LOGI(TAG, "app_main: mqtt client init uri=%s", CONFIG_WB_MQTT_BROKER_URI);
+    ESP_LOGI(TAG, "app_main: mqtt client init uri=%s", WB_MQTT_BROKER_URI);
     esp_mqtt_client_config_t mqtt_cfg = {};
-    mqtt_cfg.broker.address.uri = CONFIG_WB_MQTT_BROKER_URI;
-    if (strlen(CONFIG_WB_MQTT_USER) > 0) {
-        mqtt_cfg.credentials.username = CONFIG_WB_MQTT_USER;
-        mqtt_cfg.credentials.authentication.password = CONFIG_WB_MQTT_PASSWORD;
-        ESP_LOGI(TAG, "app_main: mqtt auth user=%s", CONFIG_WB_MQTT_USER);
+    mqtt_cfg.broker.address.uri = WB_MQTT_BROKER_URI;
+    if (strlen(WB_MQTT_USER) > 0) {
+        mqtt_cfg.credentials.username = WB_MQTT_USER;
+        mqtt_cfg.credentials.authentication.password = WB_MQTT_PASSWORD;
+        ESP_LOGI(TAG, "app_main: mqtt auth user=%s", WB_MQTT_USER);
     }
     s_mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
     if (s_mqtt_client == nullptr) {
