@@ -14,14 +14,14 @@ GPIO 35 is input-only; the circuit must drive it high when dry.
 
 ## Source layout
 
-`main/` contains: `gpio.c` (shared GPIO init and level/pump pin access), `level.c` (level sensing and pumps-disabled logic), `pump.c` (pump selection and state publish), `mqtt.c` (MQTT client, publish/subscribe), `wifi.c` (STA init, block until IP or timeout), `priv.h` (internal API and shared state), `main.cpp` (app_main and init order).
+`main/` contains: `gpio.c` (shared GPIO init and level/pump pin access), `level.c` (level sensing and pumps-disabled logic), `pump.c` (pump selection and state publish), `mqtt.c` (MQTT client, publish/subscribe), `wifi.c` (STA init, block until IP or timeout), `log_tcp.c` (TCP log server for monitoring over WiFi), `priv.h` (internal API and shared state), `main.cpp` (app_main and init order).
 
 ## Build and flash
 
 **Prerequisites:** ESP-IDF v5.x or v6.x, `idf.py` in PATH.
 
 1. Set target: `idf.py set-target esp32`
-2. Configure WiFi and MQTT: `idf.py menuconfig` → **Water Bucket Controller** (WB_WIFI_SSID, WB_WIFI_PASSWORD, WB_MQTT_BROKER_URI; optionally WB_MQTT_USER, WB_MQTT_PASSWORD)
+2. Configure WiFi and MQTT: copy `main/wb_config.h.example` to `main/wb_config.h` and set `WB_WIFI_SSID`, `WB_WIFI_PASSWORD`, `WB_MQTT_BROKER_URI`; optionally `WB_MQTT_USER`, `WB_MQTT_PASSWORD`. Set `WB_LOG_TCP_PORT` (default 8080) or 0 to disable log-over-WiFi.
 3. Build: `idf.py build`
 4. Flash and monitor: `idf.py -p PORT flash monitor` — replace `PORT` with your serial port. If you omit `-p PORT`, `idf.py` will prompt or auto-detect.
 
@@ -35,11 +35,19 @@ GPIO 35 is input-only; the circuit must drive it high when dry.
 
 Flashing is over USB/serial only.
 
+## Monitor logs over WiFi
+
+After WiFi has an IP, all `ESP_LOG*` output is mirrored to a TCP server (in addition to USB serial). One client at a time can connect to view a live stream of log lines.
+
+- **Port:** configurable in `wb_config.h` as `WB_LOG_TCP_PORT` (default **8080**). Set to **0** to disable the TCP log server.
+- **Connect:** from a PC on the same network run `nc <ESP32_IP> 8080` (macOS/Linux). Replace `<ESP32_IP>` with the device’s IP (from your router/DHCP or from a one-time serial monitor session).
+- **Example:** `nc 10.0.0.154 8080`
+
 ## Home Assistant setup
 
-**MQTT broker:** Install the Mosquitto add-on (Settings → Add-ons → Add-on Store). Enable "Start on boot" and "Watchdog". Note broker address (usually your HA host) and port (default 1883). If the broker uses auth, create a user in HA and set WB_MQTT_USER / WB_MQTT_PASSWORD in menuconfig.
+**MQTT broker:** Install the Mosquitto add-on (Settings → Add-ons → Add-on Store). Enable "Start on boot" and "Watchdog". Note broker address (usually your HA host) and port (default 1883). If the broker uses auth, create a user in HA and set WB_MQTT_USER / WB_MQTT_PASSWORD in `wb_config.h`.
 
-**MQTT integration:** In HA go to Settings → Integrations → Add → MQTT and configure the broker. The ESP32 connects to the same broker.
+**MQTT integration:** In HA go to Settings → Integrations → Add → MQTT and configure the broker. Set `WB_MQTT_BROKER_URI` in `wb_config.h` to the same broker (e.g. `mqtt://10.0.0.126:1883`).
 
 **Entities (manual):** After the device is connected and publishing:
 
@@ -60,7 +68,9 @@ Flashing is over USB/serial only.
 
 **Serial monitor:** Run `idf.py -p PORT monitor` after flashing. Watch logs for WiFi/MQTT connect, level readings, and pump command handling. Use `idf.py monitor --print-filter wb:info` to filter by tag if needed.
 
-**MQTT without Home Assistant:** Use any MQTT client (e.g. `mosquitto_pub` / `mosquitto_sub`, or MQTT Explorer). Subscribe to `water_bucket/state/#` to see level_1/2/3 and pump. Publish to `water_bucket/cmd/pump` with payload `0`, `1`, `2`, `3`, or `off` to drive pumps. Ensure the broker address in menuconfig matches the machine running the broker.
+**Logs over WiFi:** Once the ESP32 has an IP, run `nc <ESP32_IP> 8080` (see **Monitor logs over WiFi** above) to stream logs without USB.
+
+**MQTT without Home Assistant:** Use any MQTT client (e.g. `mosquitto_pub` / `mosquitto_sub`, or MQTT Explorer). Subscribe to `water_bucket/state/#` to see level_1/2/3 and pump. Publish to `water_bucket/cmd/pump` with payload `0`, `1`, `2`, `3`, or `off` to drive pumps. Ensure `WB_MQTT_BROKER_URI` in `wb_config.h` matches the machine running the broker.
 
 **Hardware checks:**
 

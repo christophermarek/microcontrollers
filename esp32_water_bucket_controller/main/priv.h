@@ -51,6 +51,7 @@ void publish_pump(void);
 void publish_full_state(void);
 void level_timer_cb(void *arg);
 void wifi_init_blocking(void);
+void log_tcp_init(void);
 void mqtt_event(void *arg, esp_event_base_t base, int32_t id, void *data);
 
 #ifdef __cplusplus

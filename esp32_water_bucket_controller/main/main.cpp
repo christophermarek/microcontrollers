@@ -47,7 +47,11 @@ extern "C" void app_main(void)
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     ESP_LOGI(TAG, "app_main: wifi_init_blocking");
     wifi_init_blocking();
+    log_tcp_init();
     ESP_LOGI(TAG, "app_main: mqtt client init uri=%s", WB_MQTT_BROKER_URI);
+    if (strstr(WB_MQTT_BROKER_URI, ":8123") != nullptr) {
+        ESP_LOGW(TAG, "app_main: port 8123 is usually HTTP (e.g. Home Assistant); use 1883 for MQTT");
+    }
     esp_mqtt_client_config_t mqtt_cfg = {};
     mqtt_cfg.broker.address.uri = WB_MQTT_BROKER_URI;
     if (strlen(WB_MQTT_USER) > 0) {
