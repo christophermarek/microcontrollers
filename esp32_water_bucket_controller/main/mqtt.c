@@ -25,9 +25,10 @@ static const char *s_topic_cmd = "water_bucket/cmd/pump";
 static const char *s_topic_state_level1 = "water_bucket/state/level_1";
 static const char *s_topic_state_level2 = "water_bucket/state/level_2";
 static const char *s_topic_state_level3 = "water_bucket/state/level_3";
+static const char *s_topic_status = "water_bucket/status";
 
 #define DISCOVERY_PREFIX "homeassistant"
-#define DISCOVERY_BUF_SIZE 512
+#define DISCOVERY_BUF_SIZE 640
 
 static void publish_discovery(void)
 {
@@ -51,23 +52,39 @@ static void publish_discovery(void)
     for (int i = 0; i < 3; i++) {
         len = snprintf(buf, sizeof(buf),
             "{\"name\":\"%s\",\"state_topic\":\"%s\",\"payload_on\":\"1\",\"payload_off\":\"0\","
-            "\"unique_id\":\"%s\",\"device\":{\"identifiers\":[\"%s\"],\"name\":\"Water Bucket\","
-            "\"model\":\"Water Bucket Controller\",\"manufacturer\":\"DIY\"}}",
-            level_names[i], level_topics[i], level_uids[i], device_id);
+            "\"unique_id\":\"%s\",\"availability_topic\":\"%s\",\"payload_available\":\"online\",\"payload_not_available\":\"offline\","
+            "\"device\":{\"identifiers\":[\"%s\"],\"name\":\"Water Bucket\",\"model\":\"Water Bucket Controller\",\"manufacturer\":\"DIY\"}}",
+            level_names[i], level_topics[i], level_uids[i], s_topic_status, device_id);
         if (len <= 0 || len >= (int)sizeof(buf)) continue;
         char topic[80];
         snprintf(topic, sizeof(topic), "%s/binary_sensor/%s/config", DISCOVERY_PREFIX, level_uids[i]);
         esp_mqtt_client_publish(c, topic, buf, len, 1, 1);
     }
 
-    len = snprintf(buf, sizeof(buf),
-        "{\"name\":\"Pump\",\"command_topic\":\"water_bucket/cmd/pump\",\"state_topic\":\"water_bucket/state/pump\","
-        "\"options\":[\"off\",\"0\",\"1\",\"2\",\"3\"],\"unique_id\":\"water_bucket_pump\","
-        "\"device\":{\"identifiers\":[\"%s\"],\"name\":\"Water Bucket\",\"model\":\"Water Bucket Controller\",\"manufacturer\":\"DIY\"}}",
-        device_id);
-    if (len > 0 && len < (int)sizeof(buf)) {
-        esp_mqtt_client_publish(c, "homeassistant/select/water_bucket_pump/config", buf, len, 1, 1);
+    static const char *pump_names[] = { "Pump 0", "Pump 1", "Pump 2", "Pump 3" };
+    static const char *pump_uids[] = { "water_bucket_pump_0", "water_bucket_pump_1", "water_bucket_pump_2", "water_bucket_pump_3" };
+    static const char pump_payload_on[] = { '0', '1', '2', '3' };
+    static const char *vt_templates[] = {
+        "{{ 'ON' if value == '0' else 'OFF' }}",
+        "{{ 'ON' if value == '1' else 'OFF' }}",
+        "{{ 'ON' if value == '2' else 'OFF' }}",
+        "{{ 'ON' if value == '3' else 'OFF' }}"
+    };
+    for (int i = 0; i < 4; i++) {
+        len = snprintf(buf, sizeof(buf),
+            "{\"name\":\"%s\",\"command_topic\":\"water_bucket/cmd/pump\",\"state_topic\":\"water_bucket/state/pump\","
+            "\"payload_on\":\"%c\",\"payload_off\":\"off\",\"value_template\":\"%s\",\"state_on\":\"ON\",\"state_off\":\"OFF\","
+            "\"unique_id\":\"%s\",\"availability_topic\":\"%s\",\"payload_available\":\"online\",\"payload_not_available\":\"offline\","
+            "\"device\":{\"identifiers\":[\"%s\"],\"name\":\"Water Bucket\",\"model\":\"Water Bucket Controller\",\"manufacturer\":\"DIY\"}}",
+            pump_names[i], pump_payload_on[i], vt_templates[i], pump_uids[i], s_topic_status, device_id);
+        if (len <= 0 || len >= (int)sizeof(buf)) continue;
+        char topic[80];
+        snprintf(topic, sizeof(topic), "%s/switch/%s/config", DISCOVERY_PREFIX, pump_uids[i]);
+        esp_mqtt_client_publish(c, topic, buf, len, 1, 1);
     }
+
+    esp_mqtt_client_publish(c, "homeassistant/select/water_bucket_pump/config", "", 0, 1, 1);
+
     ESP_LOGI(TAG, "mqtt: discovery published (device_id=%s)", device_id);
 }
 
@@ -103,6 +120,7 @@ void mqtt_event(void *arg, esp_event_base_t base, int32_t id, void *data)  /* su
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG, "mqtt: connected, subscribing to %s", s_topic_cmd);
         esp_mqtt_client_subscribe(event->client, s_topic_cmd, 0);
+        esp_mqtt_client_publish(event->client, s_topic_status, "online", 6, 1, 1);
         publish_discovery();
         publish_full_state();
         break;

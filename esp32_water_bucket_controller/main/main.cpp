@@ -52,6 +52,7 @@ extern "C" void app_main(void)
     if (strstr(WB_MQTT_BROKER_URI, ":8123") != nullptr) {
         ESP_LOGW(TAG, "app_main: port 8123 is usually HTTP (e.g. Home Assistant); use 1883 for MQTT");
     }
+    static const char lwt_msg[] = "offline";
     esp_mqtt_client_config_t mqtt_cfg = {};
     mqtt_cfg.broker.address.uri = WB_MQTT_BROKER_URI;
     if (strlen(WB_MQTT_USER) > 0) {
@@ -59,6 +60,11 @@ extern "C" void app_main(void)
         mqtt_cfg.credentials.authentication.password = WB_MQTT_PASSWORD;
         ESP_LOGI(TAG, "app_main: mqtt auth user=%s", WB_MQTT_USER);
     }
+    mqtt_cfg.session.last_will.topic = "water_bucket/status";
+    mqtt_cfg.session.last_will.msg = lwt_msg;
+    mqtt_cfg.session.last_will.msg_len = (int)sizeof(lwt_msg) - 1;
+    mqtt_cfg.session.last_will.qos = 1;
+    mqtt_cfg.session.last_will.retain = 1;
     s_mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
     if (s_mqtt_client == nullptr) {
         ESP_LOGE(TAG, "app_main: mqtt client init failed, blocking");

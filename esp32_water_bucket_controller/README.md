@@ -60,13 +60,28 @@ After WiFi has an IP, all `ESP_LOG*` output is mirrored to a TCP server (in addi
 
 ## Home Assistant setup
 
-**MQTT broker:** Install the Mosquitto add-on (Settings → Add-ons → Add-on Store). Enable "Start on boot" and "Watchdog". Note broker address (usually your HA host) and port (default 1883). If the broker uses auth, create a user in HA and set WB_MQTT_USER / WB_MQTT_PASSWORD in `wb_config.h`.
+### Production workflow
 
-**MQTT integration:** In HA go to Settings → Integrations → Add → MQTT and configure the broker. Set `WB_MQTT_BROKER_URI` in `wb_config.h` to the same broker (e.g. `mqtt://10.0.0.126:1883`).
+1. **Broker:** Settings → Add-ons → Add-on Store → Mosquitto broker. Install, enable "Start on boot" and "Watchdog". Note host (usually HA IP) and port (1883). If you enable auth, create a user and use it in `wb_config.h`.
+2. **Integration:** Settings → Integrations → Add → MQTT. Configure broker (host, port, user/password if used). Set `WB_MQTT_BROKER_URI` in `wb_config.h` to match (e.g. `mqtt://192.168.1.10:1883`).
+3. **Discovery:** Leave MQTT discovery enabled (Settings → Devices & Services → MQTT → Configure). Default prefix `homeassistant` is used.
+4. **Flash device:** Build and flash the ESP32. Once it connects to WiFi and MQTT, it publishes discovery (retained) and a birth message on `water_bucket/status` (`online`). LWT is set so on unexpected disconnect the broker publishes `offline` to `water_bucket/status`.
+5. **Device in HA:** After the ESP32 connects, one device **Water Bucket** appears under MQTT with: three binary sensors (Level 1–3), four switches (Pump 0–3), and availability from `water_bucket/status`. Entities show *unavailable* when the device is offline.
 
-**MQTT discovery:** On connect to the broker, the ESP32 publishes Home Assistant discovery messages (retained) so the entities are created automatically. Ensure MQTT discovery is enabled (Settings → Devices & Services → MQTT → Configure; discovery is on by default). After the device connects, you should see one device **Water Bucket** with three binary sensors (Level 1–3, “on” = dry, “off” = water) and one select entity **Pump** (options: off, 0, 1, 2, 3). No `configuration.yaml` is required for discovery.
+### MQTT discovery (firmware)
 
-**Entities (manual fallback):** If discovery is disabled or entities do not appear, add them manually in `configuration.yaml`. Add this under the top-level `mqtt:` key (create the key if you only have the MQTT integration and no existing `mqtt:` block). After editing YAML, restart Home Assistant.
+The firmware follows Home Assistant MQTT discovery best practices:
+
+- **Device:** Single device per ESP32; `identifiers` use MAC-based id (`water_bucket_<mac_hex>`), `name`, `model`, `manufacturer` for the device card.
+- **Availability:** All entities use `availability_topic`: `water_bucket/status`, `payload_available`: `online`, `payload_not_available`: `offline`. The ESP32 publishes `online` (retained) on connect and sets LWT `offline` (retained) so HA marks the device unavailable when the connection drops.
+- **Binary sensors:** Level 1–3; `state_topic` per level, `payload_on`: `1` (dry), `payload_off`: `0` (water).
+- **Pump control:** Four MQTT **switches** (Pump 0, Pump 1, Pump 2, Pump 3). Each switch: `command_topic` `water_bucket/cmd/pump`, `payload_on` `0`–`3`, `payload_off` `off`; `state_topic` `water_bucket/state/pump` with `value_template` so the switch is on only when that pump index is active. Only one pump can be on; turning another on switches the active pump; turning a switch off sends `off`.
+
+No `configuration.yaml` is required when discovery is used.
+
+### Entities (manual fallback)
+
+If discovery is disabled or entities do not appear, add them in `configuration.yaml` under the top-level `mqtt:` key. Then restart Home Assistant.
 
 ```yaml
 mqtt:
@@ -75,41 +90,122 @@ mqtt:
       state_topic: "water_bucket/state/level_1"
       payload_on: "1"
       payload_off: "0"
+      availability_topic: "water_bucket/status"
+      payload_available: "online"
+      payload_not_available: "offline"
       unique_id: "water_bucket_level_1"
     - name: "Water bucket level 2"
       state_topic: "water_bucket/state/level_2"
       payload_on: "1"
       payload_off: "0"
+      availability_topic: "water_bucket/status"
+      payload_available: "online"
+      payload_not_available: "offline"
       unique_id: "water_bucket_level_2"
     - name: "Water bucket level 3"
       state_topic: "water_bucket/state/level_3"
       payload_on: "1"
       payload_off: "0"
+      availability_topic: "water_bucket/status"
+      payload_available: "online"
+      payload_not_available: "offline"
       unique_id: "water_bucket_level_3"
-  select:
-    - name: "Water bucket pump"
+  switch:
+    - name: "Water bucket pump 0"
       command_topic: "water_bucket/cmd/pump"
       state_topic: "water_bucket/state/pump"
-      options:
-        - "off"
-        - "0"
-        - "1"
-        - "2"
-        - "3"
-      unique_id: "water_bucket_pump"
+      payload_on: "0"
+      payload_off: "off"
+      value_template: "{{ 'ON' if value == '0' else 'OFF' }}"
+      state_on: "ON"
+      state_off: "OFF"
+      availability_topic: "water_bucket/status"
+      payload_available: "online"
+      payload_not_available: "offline"
+      unique_id: "water_bucket_pump_0"
+    - name: "Water bucket pump 1"
+      command_topic: "water_bucket/cmd/pump"
+      state_topic: "water_bucket/state/pump"
+      payload_on: "1"
+      payload_off: "off"
+      value_template: "{{ 'ON' if value == '1' else 'OFF' }}"
+      state_on: "ON"
+      state_off: "OFF"
+      availability_topic: "water_bucket/status"
+      payload_available: "online"
+      payload_not_available: "offline"
+      unique_id: "water_bucket_pump_1"
+    - name: "Water bucket pump 2"
+      command_topic: "water_bucket/cmd/pump"
+      state_topic: "water_bucket/state/pump"
+      payload_on: "2"
+      payload_off: "off"
+      value_template: "{{ 'ON' if value == '2' else 'OFF' }}"
+      state_on: "ON"
+      state_off: "OFF"
+      availability_topic: "water_bucket/status"
+      payload_available: "online"
+      payload_not_available: "offline"
+      unique_id: "water_bucket_pump_2"
+    - name: "Water bucket pump 3"
+      command_topic: "water_bucket/cmd/pump"
+      state_topic: "water_bucket/state/pump"
+      payload_on: "3"
+      payload_off: "off"
+      value_template: "{{ 'ON' if value == '3' else 'OFF' }}"
+      state_on: "ON"
+      state_off: "OFF"
+      availability_topic: "water_bucket/status"
+      payload_available: "online"
+      payload_not_available: "offline"
+      unique_id: "water_bucket_pump_3"
 ```
 
-- **Binary sensors:** `payload_on: "1"` = no water (dry), `payload_off: "0"` = water at that level. Entity state will be “on” when dry and “off” when wet.
-- **Pump control:** Use an MQTT Select (not a switch) because the device expects one of `0`, `1`, `2`, `3`, or `off`. The select sends that value to `water_bucket/cmd/pump` and reads state from `water_bucket/state/pump`.
+If you already have an `mqtt:` block, merge the `binary_sensor:` and `switch:` lists into it; do not add a second `mqtt:` key.
 
-If you already have an `mqtt:` section with other platforms (e.g. `sensor:`), merge the `binary_sensor:` and `select:` lists into that same `mqtt:` block; do not add a second `mqtt:` key.
-
-**Topic list (for automations):**
+### Topic list (automations / debugging)
 
 | Topic | Payload | Direction |
 |-------|---------|-----------|
+| water_bucket/status | online or offline | ESP32 → HA (birth/LWT) |
 | water_bucket/state/level_1 | 0 or 1 | ESP32 → HA |
 | water_bucket/state/level_2 | 0 or 1 | ESP32 → HA |
 | water_bucket/state/level_3 | 0 or 1 | ESP32 → HA |
 | water_bucket/state/pump | 0, 1, 2, 3, or off | ESP32 → HA |
 | water_bucket/cmd/pump | 0, 1, 2, 3, or off | HA → ESP32 |
+
+### Dashboard
+
+Add a dashboard (e.g. Settings → Dashboards → Add dashboard) or a new tab on an existing one. In YAML mode, use the following as a starting point. Replace the entity IDs with yours (Settings → Devices & Services → Entities; filter by "Water Bucket" or search for `water_bucket`). Entity IDs are usually `binary_sensor.water_bucket_level_1`, `switch.water_bucket_pump_0`, etc.; multiple devices may have a numeric suffix (e.g. `switch.water_bucket_pump_0_2`).
+
+```yaml
+title: Water Bucket
+path: water-bucket
+icon: mdi:water-pump
+cards:
+  - type: entities
+    title: Level sensors
+    entities:
+      - entity: binary_sensor.water_bucket_level_1
+        name: Level 1
+      - entity: binary_sensor.water_bucket_level_2
+        name: Level 2
+      - entity: binary_sensor.water_bucket_level_3
+        name: Level 3
+  - type: horizontal-stack
+    cards:
+      - type: entity
+        entity: switch.water_bucket_pump_0
+        name: Pump 0
+      - type: entity
+        entity: switch.water_bucket_pump_1
+        name: Pump 1
+      - type: entity
+        entity: switch.water_bucket_pump_2
+        name: Pump 2
+      - type: entity
+        entity: switch.water_bucket_pump_3
+        name: Pump 3
+```
+
+For a grid layout (e.g. levels in one row, pumps in another), use `type: grid` with `columns` and put the entities and horizontal-stack cards in `cards`. You can add a **Glance** or **Entities** card showing the device status (availability) or use a **Markdown** card with instructions. To show “Dry”/“Water” instead of on/off for levels, use a **Template** entity or a custom card; the default binary sensor shows on (dry) / off (water).
