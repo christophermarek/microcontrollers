@@ -43,28 +43,7 @@ After WiFi has an IP, all `ESP_LOG*` output is mirrored to a TCP server (in addi
 - **Connect:** from a PC on the same network run `nc <ESP32_IP> 8080` (macOS/Linux). Replace `<ESP32_IP>` with the device’s IP (from your router/DHCP or from a one-time serial monitor session).
 - **Example:** `nc 10.0.0.154 8080`
 
-## Home Assistant setup
-
-**MQTT broker:** Install the Mosquitto add-on (Settings → Add-ons → Add-on Store). Enable "Start on boot" and "Watchdog". Note broker address (usually your HA host) and port (default 1883). If the broker uses auth, create a user in HA and set WB_MQTT_USER / WB_MQTT_PASSWORD in `wb_config.h`.
-
-**MQTT integration:** In HA go to Settings → Integrations → Add → MQTT and configure the broker. Set `WB_MQTT_BROKER_URI` in `wb_config.h` to the same broker (e.g. `mqtt://10.0.0.126:1883`).
-
-**Entities (manual):** After the device is connected and publishing:
-
-- **Binary sensors:** MQTT binary sensors for `water_bucket/state/level_1`, `level_2`, `level_3` — payload `1` = no water, `0` = water at that level.
-- **Pump control:** Command topic `water_bucket/cmd/pump`. Payloads: `0`, `1`, `2`, `3` (pump index) or `off`. State topic: `water_bucket/state/pump` (payload `0`–`3` or `off`; `off` = all pumps off, including when all levels are dry).
-
-**Topic list (for automations):**
-
-| Topic | Payload | Direction |
-|-------|---------|-----------|
-| water_bucket/state/level_1 | 0 or 1 | ESP32 → HA |
-| water_bucket/state/level_2 | 0 or 1 | ESP32 → HA |
-| water_bucket/state/level_3 | 0 or 1 | ESP32 → HA |
-| water_bucket/state/pump | 0, 1, 2, 3, or off | ESP32 → HA |
-| water_bucket/cmd/pump | 0, 1, 2, 3, or off | HA → ESP32 |
-
-## Testing (outside ESPHome)
+## Testing
 
 **Serial monitor:** Run `idf.py -p PORT monitor` after flashing. Watch logs for WiFi/MQTT connect, level readings, and pump command handling. Use `idf.py monitor --print-filter wb:info` to filter by tag if needed.
 
@@ -77,3 +56,60 @@ After WiFi has an IP, all `ESP_LOG*` output is mirrored to a TCP server (in addi
 1. With all level sensors dry (or pins 32/33/35 high): confirm pump state is `off`; send a pump command via MQTT and confirm it is rejected (no pump turns on).
 2. Ground one level pin (or simulate water): send `water_bucket/cmd/pump` with `0` then `1` and confirm only one pump is on at a time and `water_bucket/state/pump` reflects the active pump.
 3. Send `off` and confirm all pumps off.
+
+
+## Home Assistant setup
+
+**MQTT broker:** Install the Mosquitto add-on (Settings → Add-ons → Add-on Store). Enable "Start on boot" and "Watchdog". Note broker address (usually your HA host) and port (default 1883). If the broker uses auth, create a user in HA and set WB_MQTT_USER / WB_MQTT_PASSWORD in `wb_config.h`.
+
+**MQTT integration:** In HA go to Settings → Integrations → Add → MQTT and configure the broker. Set `WB_MQTT_BROKER_URI` in `wb_config.h` to the same broker (e.g. `mqtt://10.0.0.126:1883`).
+
+**MQTT discovery:** On connect to the broker, the ESP32 publishes Home Assistant discovery messages (retained) so the entities are created automatically. Ensure MQTT discovery is enabled (Settings → Devices & Services → MQTT → Configure; discovery is on by default). After the device connects, you should see one device **Water Bucket** with three binary sensors (Level 1–3, “on” = dry, “off” = water) and one select entity **Pump** (options: off, 0, 1, 2, 3). No `configuration.yaml` is required for discovery.
+
+**Entities (manual fallback):** If discovery is disabled or entities do not appear, add them manually in `configuration.yaml`. Add this under the top-level `mqtt:` key (create the key if you only have the MQTT integration and no existing `mqtt:` block). After editing YAML, restart Home Assistant.
+
+```yaml
+mqtt:
+  binary_sensor:
+    - name: "Water bucket level 1"
+      state_topic: "water_bucket/state/level_1"
+      payload_on: "1"
+      payload_off: "0"
+      unique_id: "water_bucket_level_1"
+    - name: "Water bucket level 2"
+      state_topic: "water_bucket/state/level_2"
+      payload_on: "1"
+      payload_off: "0"
+      unique_id: "water_bucket_level_2"
+    - name: "Water bucket level 3"
+      state_topic: "water_bucket/state/level_3"
+      payload_on: "1"
+      payload_off: "0"
+      unique_id: "water_bucket_level_3"
+  select:
+    - name: "Water bucket pump"
+      command_topic: "water_bucket/cmd/pump"
+      state_topic: "water_bucket/state/pump"
+      options:
+        - "off"
+        - "0"
+        - "1"
+        - "2"
+        - "3"
+      unique_id: "water_bucket_pump"
+```
+
+- **Binary sensors:** `payload_on: "1"` = no water (dry), `payload_off: "0"` = water at that level. Entity state will be “on” when dry and “off” when wet.
+- **Pump control:** Use an MQTT Select (not a switch) because the device expects one of `0`, `1`, `2`, `3`, or `off`. The select sends that value to `water_bucket/cmd/pump` and reads state from `water_bucket/state/pump`.
+
+If you already have an `mqtt:` section with other platforms (e.g. `sensor:`), merge the `binary_sensor:` and `select:` lists into that same `mqtt:` block; do not add a second `mqtt:` key.
+
+**Topic list (for automations):**
+
+| Topic | Payload | Direction |
+|-------|---------|-----------|
+| water_bucket/state/level_1 | 0 or 1 | ESP32 → HA |
+| water_bucket/state/level_2 | 0 or 1 | ESP32 → HA |
+| water_bucket/state/level_3 | 0 or 1 | ESP32 → HA |
+| water_bucket/state/pump | 0, 1, 2, 3, or off | ESP32 → HA |
+| water_bucket/cmd/pump | 0, 1, 2, 3, or off | HA → ESP32 |

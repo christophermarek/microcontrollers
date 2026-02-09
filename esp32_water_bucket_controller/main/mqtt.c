@@ -6,12 +6,14 @@
  *   water_bucket/state/level_1..3  (publish) Payload: "0" = water at level, "1" = dry.
  *   water_bucket/state/pump (publish) Payload: "0".."3" or "off" (off = all off).
  *
- * On MQTT_EVENT_CONNECTED we subscribe to cmd and re-publish full state.
- * On MQTT_EVENT_DATA for cmd topic we parse payload and call set_pump().
+ * On MQTT_EVENT_CONNECTED we subscribe to cmd, publish Home Assistant discovery
+ * (retained), re-publish full state, then on MQTT_EVENT_DATA for cmd parse and set_pump().
  */
 
+#include <stdio.h>
 #include <string.h>
 #include "esp_log.h"
+#include "esp_wifi.h"
 #include "mqtt_client.h"
 #include "priv.h"
 
@@ -23,6 +25,51 @@ static const char *s_topic_cmd = "water_bucket/cmd/pump";
 static const char *s_topic_state_level1 = "water_bucket/state/level_1";
 static const char *s_topic_state_level2 = "water_bucket/state/level_2";
 static const char *s_topic_state_level3 = "water_bucket/state/level_3";
+
+#define DISCOVERY_PREFIX "homeassistant"
+#define DISCOVERY_BUF_SIZE 512
+
+static void publish_discovery(void)
+{
+    uint8_t mac[6];
+    if (esp_wifi_get_mac(WIFI_IF_STA, mac) != ESP_OK) {
+        ESP_LOGW(TAG, "mqtt: discovery skipped (wifi mac unavailable)");
+        return;
+    }
+    char device_id[32];
+    snprintf(device_id, sizeof(device_id), "water_bucket_%02x%02x%02x%02x%02x%02x",
+             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    char buf[DISCOVERY_BUF_SIZE];
+    int len;
+    esp_mqtt_client_handle_t c = s_mqtt_client;
+    if (c == NULL) return;
+
+    static const char *level_names[] = { "Level 1", "Level 2", "Level 3" };
+    const char *level_topics[] = { s_topic_state_level1, s_topic_state_level2, s_topic_state_level3 };
+    static const char *level_uids[] = { "water_bucket_level_1", "water_bucket_level_2", "water_bucket_level_3" };
+
+    for (int i = 0; i < 3; i++) {
+        len = snprintf(buf, sizeof(buf),
+            "{\"name\":\"%s\",\"state_topic\":\"%s\",\"payload_on\":\"1\",\"payload_off\":\"0\","
+            "\"unique_id\":\"%s\",\"device\":{\"identifiers\":[\"%s\"],\"name\":\"Water Bucket\","
+            "\"model\":\"Water Bucket Controller\",\"manufacturer\":\"DIY\"}}",
+            level_names[i], level_topics[i], level_uids[i], device_id);
+        if (len <= 0 || len >= (int)sizeof(buf)) continue;
+        char topic[80];
+        snprintf(topic, sizeof(topic), "%s/binary_sensor/%s/config", DISCOVERY_PREFIX, level_uids[i]);
+        esp_mqtt_client_publish(c, topic, buf, len, 1, 1);
+    }
+
+    len = snprintf(buf, sizeof(buf),
+        "{\"name\":\"Pump\",\"command_topic\":\"water_bucket/cmd/pump\",\"state_topic\":\"water_bucket/state/pump\","
+        "\"options\":[\"off\",\"0\",\"1\",\"2\",\"3\"],\"unique_id\":\"water_bucket_pump\","
+        "\"device\":{\"identifiers\":[\"%s\"],\"name\":\"Water Bucket\",\"model\":\"Water Bucket Controller\",\"manufacturer\":\"DIY\"}}",
+        device_id);
+    if (len > 0 && len < (int)sizeof(buf)) {
+        esp_mqtt_client_publish(c, "homeassistant/select/water_bucket_pump/config", buf, len, 1, 1);
+    }
+    ESP_LOGI(TAG, "mqtt: discovery published (device_id=%s)", device_id);
+}
 
 void publish_levels(void)  /* level_1..3 as "0" (wet) or "1" (dry) */
 {
@@ -56,7 +103,8 @@ void mqtt_event(void *arg, esp_event_base_t base, int32_t id, void *data)  /* su
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG, "mqtt: connected, subscribing to %s", s_topic_cmd);
         esp_mqtt_client_subscribe(event->client, s_topic_cmd, 0);
-        publish_full_state();  /* re-sync HA with current levels/pump */
+        publish_discovery();
+        publish_full_state();
         break;
     case MQTT_EVENT_DISCONNECTED:
         ESP_LOGW(TAG, "mqtt: disconnected");
