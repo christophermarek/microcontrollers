@@ -23,7 +23,17 @@ GPIO 35 is input-only; the circuit must drive it high when dry.
 1. Set target: `idf.py set-target esp32`
 2. Configure WiFi and MQTT: `idf.py menuconfig` → **Water Bucket Controller** (WB_WIFI_SSID, WB_WIFI_PASSWORD, WB_MQTT_BROKER_URI; optionally WB_MQTT_USER, WB_MQTT_PASSWORD)
 3. Build: `idf.py build`
-4. Flash and monitor: `idf.py -p PORT flash monitor`
+4. Flash and monitor: `idf.py -p PORT flash monitor` — replace `PORT` with your serial port. If you omit `-p PORT`, `idf.py` will prompt or auto-detect.
+
+**Find the serial port:**
+
+| OS | Command |
+|----|--------|
+| **Windows** | PowerShell: `[System.IO.Ports.SerialPort]::getportnames()` or Device Manager → Ports (COM & LPT) |
+| **Linux** | `ls /dev/ttyUSB* /dev/ttyACM*` |
+| **macOS** | `ls /dev/cu.*` |
+
+Flashing is over USB/serial only.
 
 ## Home Assistant setup
 
