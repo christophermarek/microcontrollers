@@ -1,0 +1,181 @@
+Command: /Users/christophermarek/.espressif/python_env/idf6.1_py3.11_env/bin/python /Users/christophermarek/esp/esp-idf/tools/idf_monitor.py -p /dev/cu.usbserial-2110 -b 115200 --toolchain-prefix xtensa-esp32-elf- --target esp32 --revision 0 /Users/christophermarek/Desktop/other/esp32_i2s_tone/build/esp32_i2s_tone.elf /Users/christophermarek/Desktop/other/esp32_i2s_tone/build/bootloader/bootloader.elf -m '/Users/christophermarek/.espressif/python_env/idf6.1_py3.11_env/bin/python' '/Users/christophermarek/esp/esp-idf/tools/idf.py' '-p' '/dev/cu.usbserial-2110'
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0040,len:6376
+load:0x40078000,len:15892
+load:0x40080400,len:3920
+entry 0x40080644
+[0;32mI (27) boot: ESP-IDF v6.1-dev-2144-g87fb2eb4e9 2nd stage bootloader[0m
+[0;32mI (27) boot: compile time Jan 24 2026 12:43:51[0m
+[0;32mI (28) boot: Multicore bootloader[0m
+[0;32mI (30) boot: chip revision: v3.1[0m
+[0;32mI (33) boot.esp32: SPI Speed      : 40MHz[0m
+[0;32mI (37) boot.esp32: SPI Mode       : DIO[0m
+[0;32mI (40) boot.esp32: SPI Flash Size : 2MB[0m
+[0;32mI (44) boot: Enabling RNG early entropy source...[0m
+[0;32mI (49) boot: Partition Table:[0m
+[0;32mI (51) boot: ## Label            Usage          Type ST Offset   Length[0m
+[0;32mI (57) boot:  0 nvs              WiFi data        01 02 00009000 00006000[0m
+[0;32mI (64) boot:  1 phy_init         RF data          01 01 0000f000 00001000[0m
+[0;32mI (71) boot:  2 factory          factory app      00 00 00010000 00100000[0m
+[0;32mI (77) boot: End of partition table[0m
+[0;32mI (80) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=09e4ch ( 40524) map[0m
+[0;32mI (102) esp_image: segment 1: paddr=00019e74 vaddr=3ffb0000 size=02aa0h ( 10912) load[0m
+[0;32mI (107) esp_image: segment 2: paddr=0001c91c vaddr=40080000 size=036fch ( 14076) load[0m
+[0;32mI (113) esp_image: segment 3: paddr=00020020 vaddr=400d0020 size=0fd68h ( 64872) map[0m
+[0;32mI (137) esp_image: segment 4: paddr=0002fd90 vaddr=400836fc size=07b24h ( 31524) load[0m
+[0;32mI (150) esp_image: segment 5: paddr=000378bc vaddr=50000000 size=00028h (    40) load[0m
+[0;32mI (156) boot: Loaded app from partition at offset 0x10000[0m
+[0;32mI (156) boot: Disabling RNG early entropy source...[0m
+[0;32mI (168) cpu_start: Multicore app[0m
+[0;32mI (176) cpu_start: GPIO 3 and 1 are used as console UART I/O pins[0m
+[0;32mI (176) cpu_start: Pro cpu start user code[0m
+[0;32mI (177) cpu_start: cpu freq: 160000000 Hz[0m
+[0;32mI (178) app_init: Application information:[0m
+[0;32mI (182) app_init: Project name:     esp32_i2s_tone[0m
+[0;32mI (187) app_init: App version:      1[0m
+[0;32mI (190) app_init: Compile time:     Jan 24 2026 12:43:45[0m
+[0;32mI (195) app_init: ELF file SHA256:  4c876fe3c...[0m
+[0;32mI (199) app_init: ESP-IDF:          v6.1-dev-2144-g87fb2eb4e9[0m
+[0;32mI (205) efuse_init: Min chip rev:     v0.0[0m
+[0;32mI (209) efuse_init: Max chip rev:     v3.99 [0m
+[0;32mI (213) efuse_init: Chip rev:         v3.1[0m
+[0;32mI (217) heap_init: Initializing. RAM available for dynamic allocation:[0m
+[0;32mI (223) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM[0m
+[0;32mI (228) heap_init: At 3FFB4458 len 0002BBA8 (174 KiB): DRAM[0m
+[0;32mI (233) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM[0m
+[0;32mI (239) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM[0m
+[0;32mI (244) heap_init: At 4008B220 len 00014DE0 (83 KiB): IRAM[0m
+[0;32mI (251) spi_flash: detected chip: generic[0m
+[0;32mI (253) spi_flash: flash io: dio[0m
+[0;33mW (256) spi_flash: Detected size(4096k) larger than the size in the binary image header(2048k). Using the size in the binary image header.[0m
+[0;32mI (269) main_task: Started on CPU0[0m
+[0;32mI (279) main_task: Calling app_main()[0m
+[0;32mI (279) i2s_passthrough: Mic->Speaker passthrough (INMP441 RX, MAX98357 TX)[0m
+[0;32mI (279) i2s_passthrough: BCLK=26 WS=25 MIC_SD(DIN)=33 AMP_DIN(DOUT)=22 SR=16000[0m
+[0;32mI (299) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=10547 avgAbs16=4888[0m
+[0;32mI (429) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=1112 avgAbs16=305[0m
+[0;32mI (559) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=510 avgAbs16=129[0m
+[0;32mI (689) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=310 avgAbs16=97[0m
+[0;32mI (809) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=373 avgAbs16=96[0m
+[0;32mI (939) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=296 avgAbs16=118[0m
+[0;32mI (1069) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=334 avgAbs16=140[0m
+[0;32mI (1199) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=290 avgAbs16=93[0m
+[0;32mI (1329) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=389 avgAbs16=123[0m
+[0;32mI (1449) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=379 avgAbs16=96[0m
+[0;32mI (1579) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=507 avgAbs16=120[0m
+[0;32mI (1709) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=305 avgAbs16=93[0m
+[0;32mI (1839) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=343 avgAbs16=91[0m
+[0;32mI (1969) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=383 avgAbs16=100[0m
+[0;32mI (2089) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=381 avgAbs16=95[0m
+[0;32mI (2219) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=374 avgAbs16=117[0m
+[0;32mI (2349) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=419 avgAbs16=102[0m
+[0;32mI (2479) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=589 avgAbs16=180[0m
+[0;32mI (2609) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=381 avgAbs16=134[0m
+[0;32mI (2729) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=410 avgAbs16=139[0m
+[0;32mI (2859) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=2554 avgAbs16=895[0m
+[0;32mI (2989) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=1882 avgAbs16=604[0m
+[0;32mI (3119) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=327 avgAbs16=102[0m
+[0;32mI (3249) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=460 avgAbs16=151[0m
+[0;32mI (3369) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=309 avgAbs16=113[0m
+[0;32mI (3499) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=462 avgAbs16=130[0m
+[0;32mI (3629) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=483 avgAbs16=138[0m
+[0;32mI (3759) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=803 avgAbs16=223[0m
+[0;32mI (3889) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=656 avgAbs16=244[0m
+[0;32mI (4009) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=4886 avgAbs16=1623[0m
+[0;32mI (4139) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=6999 avgAbs16=2693[0m
+[0;32mI (4269) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=5369 avgAbs16=2085[0m
+[0;32mI (4399) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=1988 avgAbs16=824[0m
+[0;32mI (4529) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=563 avgAbs16=166[0m
+[0;32mI (4649) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=499 avgAbs16=169[0m
+[0;32mI (4779) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=312 avgAbs16=101[0m
+[0;32mI (4909) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=447 avgAbs16=128[0m
+[0;32mI (5039) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=467 avgAbs16=129[0m
+[0;32mI (5169) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=398 avgAbs16=110[0m
+[0;32mI (5289) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=452 avgAbs16=106[0m
+[0;32mI (5419) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=440 avgAbs16=125[0m
+[0;32mI (5549) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=19764 avgAbs16=8011[0m
+[0;32mI (5679) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=12051 avgAbs16=4663[0m
+[0;32mI (5809) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=8186 avgAbs16=2910[0m
+[0;32mI (5929) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=744 avgAbs16=253[0m
+[0;32mI (6059) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=650 avgAbs16=195[0m
+[0;32mI (6189) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=402 avgAbs16=126[0m
+[0;32mI (6319) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=368 avgAbs16=106[0m
+[0;32mI (6449) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=548 avgAbs16=120[0m
+[0;32mI (6569) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=4116 avgAbs16=1213[0m
+[0;32mI (6699) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=7297 avgAbs16=2549[0m
+[0;32mI (6829) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=5988 avgAbs16=1820[0m
+[0;32mI (6959) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=767 avgAbs16=223[0m
+[0;32mI (7089) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=504 avgAbs16=140[0m
+[0;32mI (7209) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=954 avgAbs16=304[0m
+[0;32mI (7339) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=345 avgAbs16=100[0m
+[0;32mI (7469) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=647 avgAbs16=161[0m
+[0;32mI (7599) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=341 avgAbs16=114[0m
+[0;32mI (7729) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=454 avgAbs16=145[0m
+[0;32mI (7849) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=450 avgAbs16=127[0m
+[0;32mI (7979) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=321 avgAbs16=101[0m
+[0;32mI (8109) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=341 avgAbs16=101[0m
+[0;32mI (8239) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=1022 avgAbs16=205[0m
+[0;32mI (8369) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=1618 avgAbs16=565[0m
+[0;32mI (8489) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=429 avgAbs16=113[0m
+[0;32mI (8619) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=304 avgAbs16=90[0m
+[0;32mI (8749) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=305 avgAbs16=105[0m
+[0;32mI (8879) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=473 avgAbs16=127[0m
+[0;32mI (9009) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=1765 avgAbs16=516[0m
+[0;32mI (9129) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=1483 avgAbs16=580[0m
+[0;32mI (9259) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=1790 avgAbs16=548[0m
+[0;32mI (9389) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=1750 avgAbs16=473[0m
+[0;32mI (9519) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=1617 avgAbs16=545[0m
+[0;32mI (9649) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=2384 avgAbs16=865[0m
+[0;32mI (9769) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=1990 avgAbs16=631[0m
+[0;32mI (9899) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=1466 avgAbs16=449[0m
+[0;32mI (10029) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=1372 avgAbs16=424[0m
+[0;32mI (10159) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=1296 avgAbs16=472[0m
+[0;32mI (10289) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=2589 avgAbs16=795[0m
+[0;32mI (10409) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=2483 avgAbs16=687[0m
+[0;32mI (10539) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=3891 avgAbs16=1114[0m
+[0;32mI (10669) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=3846 avgAbs16=1075[0m
+[0;32mI (10799) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=3155 avgAbs16=1028[0m
+[0;32mI (10929) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=2824 avgAbs16=902[0m
+[0;32mI (11049) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=3327 avgAbs16=1276[0m
+[0;32mI (11179) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=3480 avgAbs16=1330[0m
+[0;32mI (11309) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=3596 avgAbs16=1433[0m
+[0;32mI (11439) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=3293 avgAbs16=1381[0m
+[0;32mI (11569) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=3736 avgAbs16=1495[0m
+[0;32mI (11689) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=4775 avgAbs16=1312[0m
+[0;32mI (11819) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=3319 avgAbs16=1344[0m
+[0;32mI (11949) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=2483 avgAbs16=1134[0m
+[0;32mI (12079) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=2984 avgAbs16=1353[0m
+[0;32mI (12209) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=3029 avgAbs16=1076[0m
+[0;32mI (12329) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=4906 avgAbs16=1458[0m
+[0;32mI (12459) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=3951 avgAbs16=932[0m
+[0;32mI (12589) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=3962 avgAbs16=722[0m
+[0;32mI (12719) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=3267 avgAbs16=438[0m
+[0;32mI (12849) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=3998 avgAbs16=553[0m
+[0;32mI (12969) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=2762 avgAbs16=334[0m
+[0;32mI (13099) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=489 avgAbs16=134[0m
+[0;32mI (13229) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=774 avgAbs16=198[0m
+[0;32mI (13359) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=670 avgAbs16=241[0m
+[0;32mI (13489) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=1165 avgAbs16=336[0m
+[0;32mI (13609) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=961 avgAbs16=312[0m
+[0;32mI (13739) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=551 avgAbs16=203[0m
+[0;32mI (13869) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=925 avgAbs16=267[0m
+[0;32mI (13999) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=411 avgAbs16=128[0m
+[0;32mI (14129) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=385 avgAbs16=122[0m
+[0;32mI (14249) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=409 avgAbs16=116[0m
+[0;32mI (14379) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=347 avgAbs16=111[0m
+[0;32mI (14509) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=487 avgAbs16=154[0m
+[0;32mI (14639) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=371 avgAbs16=117[0m
+[0;32mI (14769) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=437 avgAbs16=108[0m
+[0;32mI (14889) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=769 avgAbs16=219[0m
+[0;32mI (15019) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=454 avgAbs16=154[0m
+[0;32mI (15149) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=571 avgAbs16=128[0m
+[0;32mI (15279) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=337 avgAbs16=121[0m
+[0;32mI (15409) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=552 avgAbs16=142[0m
+[0;32mI (15529) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=347 avgAbs16=110[0m
+[0;32mI (15659) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=404 avgAbs16=130[0m
+[0;32mI (15789) i2s_passthrough: frames=256 tx_bytes=2048 maxAbs16=332 avgAbs16=126[0m
