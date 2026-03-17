@@ -82,7 +82,6 @@ typedef enum {
 
 esp_err_t lcd_init(void);
 esp_err_t lcd_draw_rows(const char rows[8][17], int invert_row);
-esp_err_t lcd_set_flip(bool enabled);
 esp_err_t lcd_set_contrast(uint8_t contrast);
 void ui_init(void);
 void ui_post_input(ui_input_event_t event);

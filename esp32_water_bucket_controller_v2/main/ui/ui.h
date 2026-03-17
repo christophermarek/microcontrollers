@@ -24,7 +24,6 @@ typedef struct {
     uint16_t scroll;
     bool menu_mode;
     uint8_t home_menu_cursor;
-    bool settings_flip;
     uint8_t settings_contrast_idx;
 } ui_state_t;
 

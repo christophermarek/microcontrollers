@@ -77,15 +77,6 @@ esp_err_t lcd_draw_rows(const char rows[8][17], int invert_row)
     return ESP_OK;
 }
 
-esp_err_t lcd_set_flip(bool enabled)
-{
-    if (s_lcd == NULL) {
-        return ESP_ERR_INVALID_STATE;
-    }
-    s_lcd->dev_config.flip_enabled = enabled;
-    return ssd1306_clear_display(s_lcd, false);
-}
-
 esp_err_t lcd_set_contrast(uint8_t contrast)
 {
     if (s_lcd == NULL) {

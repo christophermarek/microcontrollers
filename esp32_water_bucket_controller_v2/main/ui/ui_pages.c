@@ -5,10 +5,8 @@
 #include "ui_pages_internal.h"
 #include "ui_tz.h"
 
-#define UI_LOG_VIEW_CHUNK 12
-
-#define STZ_MAX 15
-#define STZ_TZ 3
+#define STZ_MAX 13
+#define STZ_TZ 2
 
 void ui_pages_header_title(ui_frame_t *f, const char *title)
 {
@@ -26,26 +24,39 @@ void ui_pages_header_title(ui_frame_t *f, const char *title)
     ui_pages_set_line(f->rows[0], line);
 }
 
-static size_t ui_logs_segment_count(void)
+void ui_pages_header_title_time(ui_frame_t *f, const char *title)
 {
-    size_t nseg = 0;
-    size_t n = ui_log_count();
-    for (size_t e = 0; e < n; e++) {
-        char b[64];
-        ui_log_get_recent(e, b, sizeof(b));
-        size_t L = strlen(b);
-        if (L == 0) {
-            nseg++;
-        } else {
-            nseg += (L + UI_LOG_VIEW_CHUNK - 1) / UI_LOG_VIEW_CHUNK;
-        }
+    char line[17];
+    char tmb[10];
+    memset(line, ' ', 16);
+    if (title == NULL) {
+        title = "";
     }
-    return nseg;
+    size_t n = strlen(title);
+    if (n > 7) {
+        n = 7;
+    }
+    memcpy(line, title, n);
+    time_t t = time(NULL);
+    if (t < 1700000000) {
+        memcpy(line + 8, "--:--:--", 8);
+    } else {
+        struct tm tm;
+        localtime_r(&t, &tm);
+        snprintf(tmb, sizeof(tmb), "%02d:%02d:%02d", tm.tm_hour, tm.tm_min, tm.tm_sec);
+        size_t tl = strlen(tmb);
+        if (tl > 8) {
+            tl = 8;
+        }
+        memcpy(line + 8, tmb, tl);
+    }
+    line[16] = '\0';
+    ui_pages_set_line(f->rows[0], line);
 }
 
 static uint32_t ui_logs_max_scroll(void)
 {
-    size_t nseg = ui_logs_segment_count();
+    size_t nseg = ui_logs_wrap_segment_count();
     if (nseg <= 6) {
         return 0;
     }
@@ -115,13 +126,11 @@ void ui_pages_handle_input(ui_state_t *s, ui_input_event_t event)
     }
     if (event == UI_INPUT_ROTATE_CW) {
         if (s->page == UI_PAGE_PUMPS) {
-            s->cursor = (uint8_t)((s->cursor + 1) % 9);
+            s->cursor = (uint8_t)((s->cursor + 1) % 8);
         } else if (s->page == UI_PAGE_SENSORS) {
             s->cursor = (uint8_t)((s->cursor + 1) % 8);
         } else if (s->page == UI_PAGE_SETTINGS) {
-            if (s->cursor == STZ_TZ) {
-                ui_tz_set((uint8_t)((ui_tz_get() + 1) % UI_TZ_COUNT));
-            } else if (s->cursor == 0) {
+            if (s->cursor == 0) {
                 s->cursor = 1;
             } else if (s->cursor >= STZ_MAX) {
                 s->cursor = 0;
@@ -143,13 +152,11 @@ void ui_pages_handle_input(ui_state_t *s, ui_input_event_t event)
     }
     if (event == UI_INPUT_ROTATE_CCW) {
         if (s->page == UI_PAGE_PUMPS) {
-            s->cursor = (uint8_t)((s->cursor + 8) % 9);
+            s->cursor = (uint8_t)((s->cursor + 7) % 8);
         } else if (s->page == UI_PAGE_SENSORS) {
             s->cursor = (uint8_t)((s->cursor + 7) % 8);
         } else if (s->page == UI_PAGE_SETTINGS) {
-            if (s->cursor == STZ_TZ) {
-                ui_tz_set((uint8_t)((ui_tz_get() + UI_TZ_COUNT - 1) % UI_TZ_COUNT));
-            } else if (s->cursor == 0) {
+            if (s->cursor == 0) {
                 s->cursor = STZ_MAX;
             } else {
                 s->cursor--;
@@ -182,11 +189,14 @@ void ui_pages_handle_input(ui_state_t *s, ui_input_event_t event)
             ui_log_eventf("UI pump %s", s_ui_pump_enabled ? "enabled" : "disabled");
             return;
         }
-        if (item >= 1 && item <= WB_NUM_PUMPS) {
-            set_pump((uint8_t)(item - 1));
-            return;
+        uint8_t pidx = (uint8_t)(item - 1);
+        if (pidx < WB_NUM_PUMPS) {
+            if (s_current_pump == pidx) {
+                set_pump(WB_PUMP_OFF);
+            } else {
+                set_pump(pidx);
+            }
         }
-        set_pump(WB_PUMP_OFF);
         return;
     }
     if (s->page == UI_PAGE_SENSORS) {
@@ -205,13 +215,11 @@ void ui_pages_handle_input(ui_state_t *s, ui_input_event_t event)
         if (s->cursor == 0) {
             go_home_menu(s);
         } else if (s->cursor == 1) {
-            s->settings_flip = !s->settings_flip;
-            (void)lcd_set_flip(s->settings_flip);
-            ui_log_eventf("UI flip %s", s->settings_flip ? "on" : "off");
-        } else if (s->cursor == 2) {
             s->settings_contrast_idx = (uint8_t)((s->settings_contrast_idx + 1) % 4);
             (void)lcd_set_contrast(g_ui_contrast_levels[s->settings_contrast_idx]);
             ui_log_eventf("UI contrast %u", (unsigned)g_ui_contrast_levels[s->settings_contrast_idx]);
+        } else if (s->cursor == STZ_TZ) {
+            ui_tz_set((uint8_t)((ui_tz_get() + 1) % UI_TZ_COUNT));
         } else if (s->cursor < STZ_MAX) {
             s->cursor++;
         } else {
