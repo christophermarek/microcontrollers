@@ -8,6 +8,7 @@
 #include "esp_log.h"
 #include "esp_netif.h"
 #include "esp_wifi.h"
+#include "esp_sntp.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
@@ -20,6 +21,20 @@
 
 static const char *TAG = "wb";
 static SemaphoreHandle_t s_got_ip;
+bool s_wifi_connected_state = false;
+
+static void wb_sntp_start_once(void)
+{
+    static bool started;
+    if (started) {
+        return;
+    }
+    started = true;
+    esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    esp_sntp_setservername(0, "pool.ntp.org");
+    esp_sntp_init();
+    ESP_LOGI(TAG, "wifi: SNTP started (UTC)");
+}
 
 static void wifi_event(void *arg, esp_event_base_t base, int32_t id, void *data)
 {
@@ -28,9 +43,11 @@ static void wifi_event(void *arg, esp_event_base_t base, int32_t id, void *data)
     if (base != WIFI_EVENT) return;
     if (id == WIFI_EVENT_STA_CONNECTED) {
         ESP_LOGI(TAG, "wifi: STA connected to AP (waiting for DHCP)");
+        s_wifi_connected_state = true;
     } else if (id == WIFI_EVENT_STA_DISCONNECTED) {
         wifi_event_sta_disconnected_t *ev = (wifi_event_sta_disconnected_t *)data;
         ESP_LOGW(TAG, "wifi: STA disconnected reason=%u rssi=%d", (unsigned)ev->reason, (int)ev->rssi);
+        s_wifi_connected_state = false;
         if (s_got_ip != NULL) {
             esp_wifi_connect();  // still waiting for IP; try connect again
         }
@@ -46,8 +63,9 @@ static void ip_event(void *arg, esp_event_base_t base, int32_t id, void *data)
                  IP2STR(&event->ip_info.ip),
                  IP2STR(&event->ip_info.netmask),
                  IP2STR(&event->ip_info.gw));
+        wb_sntp_start_once();
         if (s_got_ip != NULL) {
-            xSemaphoreGive(s_got_ip);  // unblock wifi_init_blocking
+            xSemaphoreGive(s_got_ip);
         }
     }
 }

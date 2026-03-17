@@ -13,8 +13,33 @@ dependencies:
     source:
       type: idf
     version: 6.1.0
+  k0i05/esp_ssd1306:
+    component_hash: 0bda01e422bdefe42b0760b2e3d3e840d57f5adc555fe40a267ecb918d9b63a2
+    dependencies:
+    - name: idf
+      require: private
+      version: '>5.3.0'
+    - name: k0i05/esp_type_utils
+      registry_url: https://components.espressif.com
+      require: private
+      version: '>=1.0.0'
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 1.2.7
+  k0i05/esp_type_utils:
+    component_hash: 95d8ec40268e045f7e264d8035f451e53844b4a2f6d5f112ece6645c5effd639
+    dependencies:
+    - name: idf
+      require: private
+      version: '>5.3.0'
+    source:
+      registry_url: https://components.espressif.com
+      type: service
+    version: 1.2.7
 direct_dependencies:
 - espressif/mqtt
-manifest_hash: dd18294d670cc4555c4752315f1a7af66794892f3ce3782fee64e13052a721cb
+- k0i05/esp_ssd1306
+manifest_hash: 8c37dfef8e4e22552a44bf167d74a93816803193e6e81855b9bdd649ab268ce5
 target: esp32
 version: 2.0.0

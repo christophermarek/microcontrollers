@@ -8,6 +8,8 @@ void ui_test_init(void)
     esp_err_t e = lcd_init();
     if (e != ESP_OK) {
         ESP_LOGW(TAG, "lcd: init failed %s", esp_err_to_name(e));
+        return;
     }
+    ui_init();
     rotary_encoder_init();
 }

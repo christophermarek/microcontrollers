@@ -13,11 +13,25 @@ static const char *TAG = "wb";
 
 SemaphoreHandle_t s_pump_mux = NULL;
 uint8_t s_current_pump = WB_PUMP_OFF;
+bool s_ui_pump_enabled = true;
+
+void set_ui_pump_enabled(bool enabled)
+{
+    s_ui_pump_enabled = enabled;
+    if (!enabled) {
+        set_pump(WB_PUMP_OFF);
+    }
+}
 
 void set_pump(uint8_t index)
 {
     if (xSemaphoreTake(s_pump_mux, pdMS_TO_TICKS(100)) != pdTRUE) {
         ESP_LOGW(TAG, "set_pump: mutex timeout (100 ms), skipping index=%u", (unsigned)index);
+        return;
+    }
+    if (!s_ui_pump_enabled && index < WB_NUM_PUMPS) {
+        xSemaphoreGive(s_pump_mux);
+        ESP_LOGW(TAG, "set_pump: rejected index=%u (ui disabled)", (unsigned)index);
         return;
     }
     if (s_pumps_disabled && index < WB_NUM_PUMPS) {

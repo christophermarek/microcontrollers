@@ -19,6 +19,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include "esp_err.h"
 #include "esp_event.h"
 #include "freertos/FreeRTOS.h"
@@ -37,6 +38,9 @@ extern SemaphoreHandle_t s_pump_mux;       /* guards pump/level state across tim
 extern uint8_t s_current_pump;
 extern int s_level[WB_NUM_LEVELS];
 extern bool s_pumps_disabled;             /* true when all three dry; blocks turn-on */
+extern bool s_ui_pump_enabled;
+extern bool s_wifi_connected_state;
+extern bool s_mqtt_connected_state;
 extern esp_mqtt_client_handle_t s_mqtt_client;
 extern int s_last_level[WB_NUM_LEVELS];   /* previous read for change detection */
 extern bool s_last_pumps_disabled;
@@ -46,6 +50,7 @@ int level_gpio_get(int i);
 void pump_decoder_apply(uint8_t index);
 
 void set_pump(uint8_t index);
+void set_ui_pump_enabled(bool enabled);
 void read_levels(void);
 void publish_levels(void);
 void publish_pump(void);
@@ -56,7 +61,33 @@ void log_tcp_init(void);
 void mqtt_event(void *arg, esp_event_base_t base, int32_t id, void *data);
 void ota_check_rollback(void);
 void ota_start_from_url(const char *url);
+
+typedef enum {
+    ROTARY_EVENT_CW = 0,
+    ROTARY_EVENT_CCW,
+    ROTARY_EVENT_PRESS_SHORT,
+    ROTARY_EVENT_PRESS_LONG
+} rotary_event_t;
+
+typedef void (*rotary_event_cb_t)(rotary_event_t event, void *ctx);
+
+void rotary_encoder_set_callback(rotary_event_cb_t cb, void *ctx);
+
+typedef enum {
+    UI_INPUT_ROTATE_CW = 0,
+    UI_INPUT_ROTATE_CCW,
+    UI_INPUT_PRESS_SHORT,
+    UI_INPUT_PRESS_LONG
+} ui_input_event_t;
+
 esp_err_t lcd_init(void);
+esp_err_t lcd_draw_rows(const char rows[8][17], int invert_row);
+esp_err_t lcd_set_flip(bool enabled);
+esp_err_t lcd_set_contrast(uint8_t contrast);
+void ui_init(void);
+void ui_post_input(ui_input_event_t event);
+void ui_log_event(const char *message);
+void ui_log_eventf(const char *fmt, ...);
 void rotary_encoder_init(void);
 void ui_test_init(void);
 

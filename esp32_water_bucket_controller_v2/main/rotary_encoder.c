@@ -4,6 +4,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/task.h"
+#include "priv.h"
 
 #define ENC_A GPIO_NUM_26
 #define ENC_B GPIO_NUM_33
@@ -18,6 +19,13 @@ static const int8_t s_quad[16] = {
 static QueueHandle_t s_enc_q;
 static uint8_t s_enc_last;
 static int64_t s_sw_last_us;
+static rotary_event_cb_t s_cb;
+static void *s_cb_ctx;
+static int s_quad_accum;
+static int64_t s_last_detent_us;
+
+#define ENC_DETENT_THRESHOLD 4
+#define ENC_MIN_EMIT_GAP_US 45000
 
 static void IRAM_ATTR enc_isr(void *arg)
 {
@@ -53,23 +61,74 @@ static void enc_task(void *arg)
             if (st == ENC_EV_SW) {
                 vTaskDelay(pdMS_TO_TICKS(5));
                 if (gpio_get_level(ENC_SW) == 0) {
-                    int64_t now = esp_timer_get_time();
-                    if (now - s_sw_last_us > 80000) {
-                        s_sw_last_us = now;
-                        ESP_LOGI(TAG, "enc: switch pressed");
+                    int64_t press_start = esp_timer_get_time();
+                    if (press_start - s_sw_last_us > 80000) {
+                        while (gpio_get_level(ENC_SW) == 0) {
+                            vTaskDelay(pdMS_TO_TICKS(10));
+                        }
+                        int64_t press_us = esp_timer_get_time() - press_start;
+                        s_sw_last_us = press_start;
+                        if (press_us >= 800000) {
+                            ESP_LOGI(TAG, "enc: LONG %lldus", (long long)press_us);
+                            if (s_cb) {
+                                s_cb(ROTARY_EVENT_PRESS_LONG, s_cb_ctx);
+                            }
+                        } else {
+                            ESP_LOGI(TAG, "enc: SHORT %lldus", (long long)press_us);
+                            if (s_cb) {
+                                s_cb(ROTARY_EVENT_PRESS_SHORT, s_cb_ctx);
+                            }
+                        }
                     }
                 }
                 continue;
             }
             int8_t d = s_quad[(s_enc_last << 2) | (st & 3u)];
             s_enc_last = (st & 3u);
-            if (d > 0) {
-                ESP_LOGI(TAG, "enc: rotate CW");
-            } else if (d < 0) {
-                ESP_LOGI(TAG, "enc: rotate CCW");
+            if (d == 0) {
+                continue;
+            }
+            if ((d > 0 && s_quad_accum < 0) || (d < 0 && s_quad_accum > 0)) {
+                s_quad_accum = 0;
+            }
+            s_quad_accum += (int)d;
+            int64_t now = esp_timer_get_time();
+            while (s_quad_accum >= ENC_DETENT_THRESHOLD) {
+                if (now - s_last_detent_us < ENC_MIN_EMIT_GAP_US) {
+                    break;
+                }
+                s_quad_accum -= ENC_DETENT_THRESHOLD;
+                s_last_detent_us = now;
+                int a = gpio_get_level(ENC_A);
+                int b = gpio_get_level(ENC_B);
+                ESP_LOGI(TAG, "enc: CW detent A=%d B=%d", a, b);
+                if (s_cb) {
+                    s_cb(ROTARY_EVENT_CW, s_cb_ctx);
+                }
+                now = esp_timer_get_time();
+            }
+            while (s_quad_accum <= -ENC_DETENT_THRESHOLD) {
+                if (now - s_last_detent_us < ENC_MIN_EMIT_GAP_US) {
+                    break;
+                }
+                s_quad_accum += ENC_DETENT_THRESHOLD;
+                s_last_detent_us = now;
+                int a = gpio_get_level(ENC_A);
+                int b = gpio_get_level(ENC_B);
+                ESP_LOGI(TAG, "enc: CCW detent A=%d B=%d", a, b);
+                if (s_cb) {
+                    s_cb(ROTARY_EVENT_CCW, s_cb_ctx);
+                }
+                now = esp_timer_get_time();
             }
         }
     }
+}
+
+void rotary_encoder_set_callback(rotary_event_cb_t cb, void *ctx)
+{
+    s_cb = cb;
+    s_cb_ctx = ctx;
 }
 
 void rotary_encoder_init(void)

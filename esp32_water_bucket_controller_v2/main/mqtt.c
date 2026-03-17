@@ -13,6 +13,7 @@
 static const char *TAG = "wb";
 
 esp_mqtt_client_handle_t s_mqtt_client = NULL;
+bool s_mqtt_connected_state = false;
 
 static const char *s_topic_cmd = "water_bucket/cmd/pump";
 static const char *s_topic_cmd_ota = "water_bucket/cmd/ota";
@@ -131,6 +132,7 @@ void mqtt_event(void *arg, esp_event_base_t base, int32_t id, void *data)
     switch ((esp_mqtt_event_id_t)id) {
     case MQTT_EVENT_CONNECTED:
         ESP_LOGI(TAG, "mqtt: connected, subscribe pump+ota");
+        s_mqtt_connected_state = true;
         esp_mqtt_client_subscribe(event->client, s_topic_cmd, 1);
         esp_mqtt_client_subscribe(event->client, s_topic_cmd_ota, 1);
         esp_mqtt_client_publish(event->client, s_topic_status, "online", 6, 1, 1);
@@ -139,6 +141,7 @@ void mqtt_event(void *arg, esp_event_base_t base, int32_t id, void *data)
         break;
     case MQTT_EVENT_DISCONNECTED:
         ESP_LOGW(TAG, "mqtt: disconnected");
+        s_mqtt_connected_state = false;
         s_ota_acc_len = 0;
         break;
     case MQTT_EVENT_DATA: {
